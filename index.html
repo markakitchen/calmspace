@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CalmSpace | White Noise Generator</title>
-    <!-- PWA Manifest Link -->
     <link rel="manifest" href="/manifest.json">
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -14,498 +12,360 @@
             font-family: 'Inter', sans-serif;
             transition: background-color 0.5s;
         }
-        /* Custom styling for the controls, enhancing tap targets */
-        .noise-button {
-            transition: all 0.2s;
-            box-shadow: 0 4px #4b5563;
+        .calm-bg {
+            background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
         }
-        .noise-button.active {
-            box-shadow: 0 0 #4b5563;
-            transform: translateY(4px);
-            background-color: #2563eb; /* Blue 600 */
+        /* Simplified container for maximum compatibility */
+        #app-container {
+            background-color: rgba(255, 255, 255, 0.95); /* Solid, high opacity */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
-        .noise-button:hover:not(.active) {
-            background-color: #1f2937; /* Darker gray on hover */
+        @media (prefers-color-scheme: dark) {
+            body.calm-bg {
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            }
+            #app-container {
+                background-color: rgba(31, 41, 55, 0.95);
+                border: 1px solid rgba(255,255,255,0.1);
+            }
         }
-        .range-slider {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            outline: none;
-            opacity: 0.7;
-            transition: opacity .2s;
-            border-radius: 4px;
+        .noise-button, .timer-button { transition: all 0.2s; }
+        .noise-button.active, .timer-button.active {
+            transform: translateY(1px);
+            background-color: #2563eb;
         }
-
-        .range-slider:hover {
-            opacity: 1;
-        }
-
-        .range-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #10b981; /* Emerald 500 */
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .range-slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #10b981;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        }
+        .noise-button:hover:not(.active), .timer-button:hover:not(.active) { background-color: #374151; }
+        
+        /* Range slider styling */
+        .range-slider { -webkit-appearance: none; width: 100%; height: 8px; background: #cbd5e1; border-radius: 4px; outline: none; }
+        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #10b981; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+<body class="min-h-screen flex items-center justify-center p-4 calm-bg">
 
-    <div id="app-container" class="w-full max-w-lg bg-white dark:bg-gray-800 shadow-2xl rounded-xl p-6 md:p-10 border border-gray-100 dark:border-gray-700">
+    <div id="app-container" class="w-full max-w-lg rounded-2xl p-6 md:p-8">
         <!-- Header -->
         <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 dark:text-white">CalmSpace</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Procedural Noise Generator</p>
+            <h1 class="text-4xl font-bold text-gray-800 dark:text-white tracking-tight">CalmSpace</h1>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">Night time Noise Generator</p>
         </header>
 
         <!-- Noise Type Selection -->
         <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Select Noise Type</h2>
-            <div class="grid grid-cols-3 gap-3">
-                <button id="btn-white" data-type="white" class="noise-button bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg active:bg-blue-600">
-                    White Noise
-                </button>
-                <button id="btn-pink" data-type="pink" class="noise-button bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg active:bg-blue-600">
-                    Pink Noise
-                </button>
-                <button id="btn-brown" data-type="brown" class="noise-button bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg active:bg-blue-600">
-                    Brown Noise
-                </button>
+            <h2 class="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-200 uppercase tracking-wide text-xs">Select Sound</h2>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="selectNoise('white')" id="btn-white" data-type="white" class="noise-button flex-1 min-w-[30%] bg-gray-600 text-white font-medium py-3 px-2 rounded-lg text-sm">White</button>
+                <button onclick="selectNoise('pink')" id="btn-pink" data-type="pink" class="noise-button flex-1 min-w-[30%] bg-gray-600 text-white font-medium py-3 px-2 rounded-lg text-sm">Pink</button>
+                <button onclick="selectNoise('brown')" id="btn-brown" data-type="brown" class="noise-button flex-1 min-w-[30%] bg-gray-600 text-white font-medium py-3 px-2 rounded-lg text-sm">Brown</button>
+                <button onclick="selectNoise('deep')" id="btn-deep" data-type="deep" class="noise-button flex-1 min-w-[45%] bg-gray-600 text-white font-medium py-3 px-2 rounded-lg text-sm">Deep</button>
+                <button onclick="selectNoise('black')" id="btn-black" data-type="black" class="noise-button flex-1 min-w-[45%] bg-gray-600 text-white font-medium py-3 px-2 rounded-lg text-sm">Black</button>
             </div>
-            <p id="noise-description" class="mt-4 text-sm text-center text-gray-500 dark:text-gray-400 h-10 flex items-center justify-center italic">
-                Select a noise type to begin.
-            </p>
+            <p id="noise-description" class="mt-3 text-sm text-center text-gray-600 dark:text-gray-300 h-10 flex items-center justify-center italic leading-tight">Select a noise type to begin.</p>
         </div>
 
-        <!-- Master Play/Pause and Volume -->
-        <div class="mb-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Controls</h2>
+        <!-- Timer Selection -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-200 uppercase tracking-wide text-xs">Sleep Timer</h2>
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="setTimer(0)" data-duration="0" class="timer-button bg-gray-600 text-white font-medium py-2 px-1 rounded-lg text-sm active selected">Off</button>
+                <button onclick="setTimer(30)" data-duration="30" class="timer-button bg-gray-600 text-white font-medium py-2 px-1 rounded-lg text-sm">30m</button>
+                <button onclick="setTimer(60)" data-duration="60" class="timer-button bg-gray-600 text-white font-medium py-2 px-1 rounded-lg text-sm">60m</button>
+                <button onclick="setTimer(120)" data-duration="120" class="timer-button bg-gray-600 text-white font-medium py-2 px-1 rounded-lg text-sm">120m</button>
+            </div>
+            <div class="mt-4 flex justify-center w-full">
+                <p id="timer-status" class="w-full px-4 py-2 rounded-lg text-center font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 transition-all duration-300">Timer Off</p>
+            </div>
+        </div>
 
-            <!-- Master Play/Pause Button -->
-            <button id="toggle-play" class="w-full flex items-center justify-center py-4 px-6 mb-6 rounded-xl text-white font-bold text-lg transition-all shadow-md bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700">
-                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-2">
-                    <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 20.49c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" />
-                </svg>
-                <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-2 hidden">
-                    <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" />
-                </svg>
+        <!-- Controls -->
+        <div class="mb-6 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
+            <button id="toggle-play" onclick="togglePlay()" class="w-full flex items-center justify-center py-4 px-6 mb-6 rounded-xl text-white font-bold text-lg transition-all shadow-lg bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98]">
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 mr-2"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 20.49c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
+                <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 mr-2 hidden"><path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" /></svg>
                 <span id="toggle-text">Start Sound</span>
             </button>
-
-            <!-- Volume Slider -->
-            <label for="volume-slider" class="block text-gray-700 dark:text-gray-200 mb-2">Volume: <span id="volume-value">50%</span></label>
-            <input type="range" id="volume-slider" min="0" max="100" value="50" class="range-slider">
+            <div class="flex justify-between items-center mb-2">
+                <label for="volume-slider" class="font-medium text-gray-700 dark:text-gray-200">Volume</label>
+                <span id="volume-value" class="text-sm font-mono text-gray-500 dark:text-gray-400">50%</span>
+            </div>
+            <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)" class="range-slider cursor-pointer">
         </div>
-
-        <!-- Diagnostic/Status Indicator -->
-        <div id="status-message" class="text-center text-sm text-red-500 dark:text-red-400 mt-4">
-            <!-- User-facing status messages appear here -->
-        </div>
-        <div id="audio-status-indicator" class="text-center text-xs mt-2 text-gray-500 dark:text-gray-400">
-            Audio Context Status: <span id="context-state" class="text-yellow-500 font-bold">suspended</span>
-        </div>
-
+        <div id="status-message" class="text-center text-sm font-medium text-amber-600 dark:text-amber-400 h-6"></div>
     </div>
 
-    <script type="module">
-        // Global variables for the Web Audio API
+    <!-- MAIN APP SCRIPT (Runs immediately, no imports needed) -->
+    <script>
         let audioContext = null;
-        let noiseSource = null; // AudioBufferSourceNode
+        let noiseSource = null;
         let gainNode = null;
         let isPlaying = false;
         let currentNoiseType = null;
+        let timerDurationMinutes = 0;
+        let timerStopTimeoutId = null;
+        let timerIntervalId = null;
+        let timerEndTime = null;
+        let noiseBuffers = { 'white': null, 'pink': null, 'brown': null, 'deep': null, 'black': null };
 
-        // Buffers to hold pre-calculated noise data
-        let noiseBuffers = {
-            'white': null,
-            'pink': null,
-            'brown': null
-        };
-
-        // --- Firebase Configuration and Setup ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        setLogLevel('debug');
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-        async function initializeFirebase() {
-            try {
-                if (Object.keys(firebaseConfig).length > 0) {
-                    const app = initializeApp(firebaseConfig);
-                    const auth = getAuth(app);
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                }
-            } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-            }
-        }
-
-        // --- Context/Status Helpers ---
-
-        function updateContextStatus(state) {
-            const el = document.getElementById('context-state');
-            if (!el) return;
-            el.textContent = state.toUpperCase();
-            el.className = '';
-            if (state === 'running') {
-                el.classList.add('text-emerald-500', 'font-bold');
-            } else if (state === 'suspended') {
-                el.classList.add('text-yellow-500', 'font-bold');
-            } else {
-                el.classList.add('text-red-500', 'font-bold');
-            }
-        }
-
+        // --- Core Audio Logic ---
         async function setupAudioContext() {
-            // Create AudioContext only on first user gesture
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                audioContext.onstatechange = () => updateContextStatus(audioContext.state);
-                updateContextStatus(audioContext.state);
-
-                // Pre-generate all buffers now that the context is available
-                createNoiseBuffer('white');
-                createNoiseBuffer('pink');
-                createNoiseBuffer('brown');
+                ['white', 'pink', 'brown', 'deep', 'black'].forEach(createNoiseBuffer);
             }
-
-            // Aggressively resume context on every play attempt
             if (audioContext.state === 'suspended') {
                 try {
                     await audioContext.resume();
-                    console.log("AudioContext successfully resumed.");
-                    
-                    // TRICK: Play a short, silent oscillator to satisfy media policies.
-                    const dummyOscillator = audioContext.createOscillator();
+                    // iOS unlock
+                    const dummy = audioContext.createOscillator();
                     const dummyGain = audioContext.createGain();
-                    dummyGain.gain.setValueAtTime(0, audioContext.currentTime); // Keep it silent
-                    dummyOscillator.connect(dummyGain);
+                    dummyGain.gain.value = 0;
+                    dummy.connect(dummyGain);
                     dummyGain.connect(audioContext.destination);
-                    
-                    dummyOscillator.start(audioContext.currentTime);
-                    dummyOscillator.stop(audioContext.currentTime + 0.001); // Stop almost immediately
-
-                } catch (e) {
-                    console.error("Could not resume AudioContext:", e);
-                    document.getElementById('status-message').textContent = "Browser blocked audio start. Try clicking 'Start Sound' again.";
-                }
+                    dummy.start(0);
+                    dummy.stop(0.001);
+                } catch (e) { console.error("Audio resume failed", e); }
             }
         }
 
-        // --- Noise Generation Logic (used once to fill buffers) ---
-
-        let pinkState = [0, 0, 0, 0, 0, 0, 0];
-        let brownState = 0;
-
-        function generateNoiseData(type, bufferData, bufferSize) {
-            // Reset state variables for each buffer generation
-            if (type === 'pink') pinkState = [0, 0, 0, 0, 0, 0, 0];
-            if (type === 'brown') brownState = 0;
-
-            for (let i = 0; i < bufferSize; i++) {
-                let white = Math.random() * 2 - 1;
-                let finalValue = white; // Default to White Noise
-
-                if (type === 'pink') {
-                    // Voss-McCartney approximation for 1/f distribution
-                    pinkState[0] = 0.99886 * pinkState[0] + white * 0.0555179;
-                    pinkState[1] = 0.99332 * pinkState[1] + white * 0.075085;
-                    pinkState[2] = 0.96900 * pinkState[2] + white * 0.153852;
-                    pinkState[3] = 0.86650 * pinkState[3] + white * 0.3104856;
-                    pinkState[4] = 0.55000 * pinkState[4] + white * 0.532952;
-                    pinkState[5] = -0.7616 * pinkState[5] + white * 0.016898;
-                    let pink = pinkState[0] + pinkState[1] + pinkState[2] + pinkState[3] + pinkState[4] + pinkState[5] + pinkState[6] + white * 0.5362;
-                    pinkState[6] = white * 0.115926;
-                    finalValue = pink / 5.5; // Normalize
-                } else if (type === 'brown') {
-                    // Integration (low-pass) of White Noise
-                    brownState += 0.02 * white;
-                    // Simple Clipping to keep the signal bounded
-                    brownState = Math.max(-1.0, Math.min(1.0, brownState));
-                    finalValue = brownState;
-                }
-
-                // Write to both channels (Stereo)
-                bufferData[0][i] = finalValue;
-                bufferData[1][i] = finalValue;
-            }
-        }
-
-        // Function to create and populate the static noise buffer
         function createNoiseBuffer(type) {
             if (!audioContext || noiseBuffers[type]) return noiseBuffers[type];
-
-            const bufferDuration = 2; // 2 seconds of noise
-            const bufferSize = audioContext.sampleRate * bufferDuration;
+            const bufferSize = audioContext.sampleRate * 20; // 20 sec buffer
             const buffer = audioContext.createBuffer(2, bufferSize, audioContext.sampleRate);
-            const channel1 = buffer.getChannelData(0);
-            const channel2 = buffer.getChannelData(1);
-
-            generateNoiseData(type, [channel1, channel2], bufferSize);
-
-            // --- CLICK FIX: TAPER THE START AND END OF THE BUFFER ---
-            const taperSamples = 500; // ~11ms taper, enough to smooth out the click
             
-            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-                const data = buffer.getChannelData(channel);
+            // Noise generation state
+            let pinkState = [0,0,0,0,0,0,0], brownState = 0, deepState = 0, blackState = 0;
 
-                // Fade In (0 to 1 over taperSamples)
+            for (let ch = 0; ch < 2; ch++) {
+                const data = buffer.getChannelData(ch);
+                // Reset state for each channel
+                pinkState = [0,0,0,0,0,0,0]; brownState = 0; deepState = 0; blackState = 0;
+
+                for (let i = 0; i < bufferSize; i++) {
+                    let white = Math.random() * 2 - 1;
+                    let finalValue = white;
+
+                    if (type === 'pink') {
+                        pinkState[0] = 0.99886 * pinkState[0] + white * 0.0555179;
+                        pinkState[1] = 0.99332 * pinkState[1] + white * 0.075085;
+                        pinkState[2] = 0.96900 * pinkState[2] + white * 0.153852;
+                        pinkState[3] = 0.86650 * pinkState[3] + white * 0.3104856;
+                        pinkState[4] = 0.55000 * pinkState[4] + white * 0.532952;
+                        pinkState[5] = -0.7616 * pinkState[5] + white * 0.016898;
+                        let pink = pinkState[0] + pinkState[1] + pinkState[2] + pinkState[3] + pinkState[4] + pinkState[5] + pinkState[6] + white * 0.5362;
+                        pinkState[6] = white * 0.115926;
+                        finalValue = pink * 0.11;
+                    } else if (type === 'brown') {
+                        brownState = (brownState + (0.02 * white)) / 1.02;
+                        finalValue = brownState * 3.5;
+                    } else if (type === 'deep') {
+                        brownState = (brownState + (0.02 * white)) / 1.02;
+                        deepState += 0.1 * (brownState - deepState);
+                        finalValue = deepState * 3.5;
+                    } else if (type === 'black') {
+                        brownState = (brownState + (0.02 * white)) / 1.02;
+                        blackState += 0.02 * (brownState - blackState);
+                        finalValue = blackState * 3.5;
+                    }
+                    data[i] = Math.max(-1, Math.min(1, finalValue));
+                }
+                
+                // Tapering
+                const taperSamples = Math.floor(audioContext.sampleRate * 0.5);
                 for (let i = 0; i < taperSamples; i++) {
                     data[i] *= i / taperSamples;
-                }
-
-                // Fade Out (1 to 0 over taperSamples)
-                for (let i = 0; i < taperSamples; i++) {
-                    const index = bufferSize - taperSamples + i;
-                    data[index] *= (taperSamples - i) / taperSamples;
+                    data[bufferSize - 1 - i] *= i / taperSamples;
                 }
             }
-            // --- END CLICK FIX ---
-
             noiseBuffers[type] = buffer;
             return buffer;
         }
 
-        // --- Core Audio Control Functions ---
+        // --- Interaction Logic ---
+        function selectNoise(type) {
+            setupAudioContext();
+            if (type !== currentNoiseType) {
+                currentNoiseType = type;
+                updateActiveButton(type);
+                updateNoiseDescription(type);
+                stopNoise(false);
+                togglePlay();
+            } else if (!isPlaying) {
+                togglePlay();
+            }
+        }
 
         function togglePlay() {
-            // Must attempt to setup/resume context on user interaction
             setupAudioContext().then(() => {
                 if (!currentNoiseType) {
-                    document.getElementById('status-message').textContent = "Please select a noise color first (White, Pink, or Brown).";
-                    setTimeout(() => document.getElementById('status-message').textContent = "", 3000);
+                    document.getElementById('status-message').textContent = "Select a noise type first.";
                     return;
                 }
-
-                const volumeValue = parseInt(document.getElementById('volume-slider').value);
-                if (volumeValue === 0 && !isPlaying) {
-                     document.getElementById('status-message').textContent = "Volume is set to 0. Please turn up the volume to hear the sound.";
-                    setTimeout(() => document.getElementById('status-message').textContent = "", 5000);
-                    return;
-                }
-
-                if (isPlaying) {
-                    stopNoise();
-                } else {
-                    startNoise(currentNoiseType);
-                }
-                updatePlayButton();
+                if (isPlaying) stopNoise();
+                else startNoise(currentNoiseType);
             });
         }
 
         function startNoise(type) {
-            // If the context is still not running after the gesture, stop.
-            if (!audioContext || audioContext.state !== 'running' || !noiseBuffers[type]) {
-                document.getElementById('status-message').textContent = "Audio engine is not running. Check console for browser audio errors.";
-                return;
+            isPlaying = true;
+            updatePlayButton();
+            startTimer(); // Start/Resume timer logic
+
+            if (noiseSource) { try { noiseSource.stop(0); } catch(e){} noiseSource.disconnect(); }
+            if (!noiseBuffers[type]) { 
+                document.getElementById('status-message').textContent = "Buffering..."; 
+                return; // Buffer not ready? It will be generated on setup.
             }
 
-            // Clean up any existing nodes
-            stopNoise(false);
-
             try {
-                // 1. Create NEW Gain Node (Volume Control)
                 gainNode = audioContext.createGain();
                 gainNode.gain.setValueAtTime(parseFloat(document.getElementById('volume-slider').value) / 100, audioContext.currentTime);
                 gainNode.connect(audioContext.destination);
 
-                // 2. Create NEW Buffer Source Node (It's a one-shot source, must be new)
                 noiseSource = audioContext.createBufferSource();
                 noiseSource.buffer = noiseBuffers[type];
-                noiseSource.loop = true; // Loop the 2-second buffer indefinitely
-
-                // 3. Connect and Start
+                noiseSource.loop = true;
                 noiseSource.connect(gainNode);
                 noiseSource.start(0);
-
-                isPlaying = true;
-                document.getElementById('status-message').textContent = `Playing ${type.toUpperCase()} Noise...`;
+                document.getElementById('status-message').textContent = `Playing ${type.toUpperCase()}`;
             } catch (e) {
-                 console.error("Failed to connect audio nodes:", e);
-                 document.getElementById('status-message').textContent = `Error starting sound: ${e.message}`;
-                 stopNoise(false);
+                console.error(e);
+                stopNoise(false);
             }
         }
 
         function stopNoise(resetActive = true) {
-            if (noiseSource) {
-                try {
-                    // Attempt to stop BufferSourceNode gracefully
-                    noiseSource.stop(0);
-                } catch(e) { console.warn("Noise source already stopped or failed to stop."); }
-
-                noiseSource.disconnect();
-                noiseSource = null;
-            }
-            if (gainNode) {
-                gainNode.disconnect();
-                gainNode = null;
-            }
-
+            if (noiseSource) { try { noiseSource.stop(0); } catch(e){} noiseSource.disconnect(); noiseSource = null; }
+            if (gainNode) { gainNode.disconnect(); gainNode = null; }
             isPlaying = false;
+            stopTimer(); // Clear timer
             if (resetActive) {
                 currentNoiseType = null;
                 updateActiveButton(null);
                 updateNoiseDescription(null);
+                document.getElementById('status-message').textContent = "";
             }
             updatePlayButton();
         }
 
-        function setVolume(volumePercentage) {
-            const volume = volumePercentage / 100;
-            document.getElementById('volume-value').textContent = `${volumePercentage}%`;
-
-            if (gainNode && audioContext) {
-                // Use setValueAtTime for smooth volume changes
-                gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-            }
+        function updateVolume(val) {
+            document.getElementById('volume-value').textContent = `${val}%`;
+            if (gainNode && audioContext) gainNode.gain.setValueAtTime(val / 100, audioContext.currentTime);
         }
 
-        // --- UI/Event Handling Functions ---
+        // --- Timer Logic ---
+        function setTimer(minutes) {
+            timerDurationMinutes = parseInt(minutes);
+            updateActiveTimerButton(minutes);
+            if (isPlaying) startTimer();
+            else updateTimerDisplay();
+        }
 
+        function startTimer() {
+            stopTimer(false);
+            if (timerDurationMinutes === 0) { updateTimerDisplay(); return; }
+
+            const durationMs = timerDurationMinutes * 60 * 1000;
+            timerEndTime = Date.now() + durationMs;
+            
+            timerStopTimeoutId = setTimeout(() => {
+                if (isPlaying) { stopNoise(); document.getElementById('status-message').textContent = "Timer finished."; }
+                stopTimer();
+            }, durationMs);
+
+            timerIntervalId = setInterval(updateTimerDisplay, 1000);
+            updateTimerDisplay();
+        }
+
+        function stopTimer(updateDisplay = true) {
+            if (timerStopTimeoutId) clearTimeout(timerStopTimeoutId);
+            if (timerIntervalId) clearInterval(timerIntervalId);
+            timerEndTime = null;
+            if (updateDisplay) updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const el = document.getElementById('timer-status');
+            const defaultClasses = "w-full px-4 py-2 rounded-lg text-center font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 transition-all duration-300";
+
+            if (timerDurationMinutes === 0) {
+                el.textContent = "Timer Off"; el.className = defaultClasses; return;
+            }
+            if (!isPlaying || !timerEndTime) {
+                el.textContent = `${timerDurationMinutes}m Timer Set`; el.className = defaultClasses + " ring-2 ring-blue-400"; return;
+            }
+            const remainingMs = timerEndTime - Date.now();
+            if (remainingMs <= 0) {
+                el.textContent = "Stopped."; return;
+            }
+            const mins = Math.floor(remainingMs / 60000);
+            const secs = Math.floor((remainingMs % 60000) / 1000);
+            el.textContent = `Time Remaining: ${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+            el.className = defaultClasses + (mins < 5 ? " bg-red-500/90 text-white animate-pulse" : " bg-blue-600/90 text-white");
+        }
+
+        // --- UI Updates ---
+        function updateActiveButton(type) {
+            document.querySelectorAll('.noise-button').forEach(btn => {
+                if (btn.dataset.type === type) { btn.classList.add('active', 'bg-blue-600'); btn.classList.remove('bg-gray-600'); }
+                else { btn.classList.remove('active', 'bg-blue-600'); btn.classList.add('bg-gray-600'); }
+            });
+        }
+        function updateActiveTimerButton(duration) {
+            document.querySelectorAll('.timer-button').forEach(btn => {
+                const d = parseInt(btn.dataset.duration);
+                if (d === duration) { btn.classList.add('active', 'bg-blue-600'); btn.classList.remove('bg-gray-600'); }
+                else { btn.classList.remove('active', 'bg-blue-600'); btn.classList.add('bg-gray-600'); }
+            });
+        }
         function updatePlayButton() {
+            const btn = document.getElementById('toggle-play');
+            const txt = document.getElementById('toggle-text');
             const playIcon = document.getElementById('play-icon');
             const pauseIcon = document.getElementById('pause-icon');
-            const toggleText = document.getElementById('toggle-text');
-            const toggleButton = document.getElementById('toggle-play');
-
             if (isPlaying) {
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
-                toggleText.textContent = 'Stop Sound';
-                toggleButton.classList.remove('bg-emerald-500', 'hover:bg-emerald-600', 'active:bg-emerald-700');
-                toggleButton.classList.add('bg-red-500', 'hover:bg-red-600', 'active:bg-red-700');
+                playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden');
+                txt.textContent = 'Stop Sound';
+                btn.className = "w-full flex items-center justify-center py-4 px-6 mb-6 rounded-xl text-white font-bold text-lg transition-all shadow-lg bg-red-500 hover:bg-red-600 active:scale-[0.98]";
             } else {
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
-                const noiseName = currentNoiseType ? currentNoiseType.charAt(0).toUpperCase() + currentNoiseType.slice(1) + ' Noise' : 'Sound';
-                toggleText.textContent = 'Start ' + noiseName;
-                toggleButton.classList.remove('bg-red-500', 'hover:bg-red-600', 'active:bg-red-700');
-                toggleButton.classList.add('bg-emerald-500', 'hover:bg-emerald-600', 'active:bg-emerald-700');
+                playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden');
+                txt.textContent = currentNoiseType ? 'Start Sound' : 'Select Sound';
+                btn.className = "w-full flex items-center justify-center py-4 px-6 mb-6 rounded-xl text-white font-bold text-lg transition-all shadow-lg bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98]";
             }
         }
-
-        function updateActiveButton(activeType) {
-            document.querySelectorAll('.noise-button').forEach(button => {
-                if (button.dataset.type === activeType) {
-                    button.classList.add('active', 'bg-blue-600');
-                    button.classList.remove('bg-gray-600');
-                } else {
-                    button.classList.remove('active', 'bg-blue-600');
-                    button.classList.add('bg-gray-600');
-                }
-            });
-
-            const body = document.body;
-            if (activeType) {
-                body.classList.remove('bg-gray-50', 'dark:bg-gray-900');
-                body.classList.add('bg-blue-50', 'dark:bg-gray-950');
-            } else {
-                body.classList.add('bg-gray-50', 'dark:bg-gray-900');
-                body.classList.remove('bg-blue-50', 'dark:bg-gray-950');
-            }
-        }
-
         function updateNoiseDescription(type) {
-            const descElement = document.getElementById('noise-description');
-            let description = "";
-            switch (type) {
-                case 'white':
-                    description = "Equal power across all frequencies (like a static radio). Used for masking high-pitched sounds.";
-                    break;
-                case 'pink':
-                    description = "Power decreases by 3dB per octave. Sounds more balanced, often described as 'rushing water' or 'wind'.";
-                    break;
-                case 'brown':
-                    description = "Power decreases by 6dB per octave. Sounds deep and rumble-like (like a waterfall). Best for low-frequency masking.";
-                    break;
-                default:
-                    description = "Select a noise type to begin.";
-            }
-            descElement.textContent = description;
+            const desc = document.getElementById('noise-description');
+            if (!type) { desc.textContent = "Select a noise type to begin."; return; }
+            const map = { 'white': "Equal power.", 'pink': "Balanced depth.", 'brown': "Deep rumble.", 'deep': "Filtered warmth.", 'black': "Ultra-low rumble." };
+            desc.textContent = map[type] || "";
         }
 
-        // --- Initialization and Event Listeners ---
-
-        window.onload = function() {
-            initializeFirebase();
-            updateContextStatus('suspended'); // Initial state assumed
-
-            // Set initial volume value display and UI state
-            const volumeSlider = document.getElementById('volume-slider');
-            setVolume(parseInt(volumeSlider.value));
-            updateActiveButton(null);
-            updateNoiseDescription(null);
-            updatePlayButton();
-
-            // Function to handle all user input
-            const handleUserGesture = (e) => {
-                // 1. Ensure Audio Context is created and resumed
-                setupAudioContext();
-
-                // 2. Handle Noise Type Selection
-                if (e.target.closest('.noise-button')) {
-                    const type = e.target.closest('.noise-button').dataset.type;
-                    if (type !== currentNoiseType) {
-                        currentNoiseType = type;
-                        updateActiveButton(type);
-                        updateNoiseDescription(type);
-                        stopNoise(false);
-                        togglePlay();
-                    } else if (!isPlaying) {
-                        togglePlay();
-                    }
-                }
-                // 3. Handle Play/Pause
-                else if (e.target.closest('#toggle-play')) {
-                    togglePlay();
-                }
-            };
-
-
-            document.getElementById('app-container').addEventListener('click', handleUserGesture);
-
-            // 4. Setup Volume Slider (input is not considered a reliable gesture, but we call setup anyway)
-            volumeSlider.addEventListener('input', function() {
-                setupAudioContext();
-                setVolume(parseInt(this.value));
+        // SW Unregister to fix cache
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) { registration.unregister(); }
             });
-            
-            // 5. Register Service Worker for PWA
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/service-worker.js')
-                        .then(registration => {
-                            console.log('SW registered: ', registration);
-                        })
-                        .catch(registrationError => {
-                            console.log('SW registration failed: ', registrationError);
-                        });
-                });
-            }
+        }
+    </script>
 
-        };
+    <!-- MODULE SCRIPT (Firebase Auth - isolated so failures don't kill the app) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        if (Object.keys(firebaseConfig).length > 0) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch(e) { console.log("Firebase init skipped/failed", e); }
+        }
     </script>
 </body>
 </html>

@@ -1,15 +1,14 @@
-const CACHE_NAME = 'calmspace-v1';
+// Bumped to v4 to force an immediate update for all users
+const CACHE_NAME = 'calmspace-v4';
 const urlsToCache = [
     '/',
     '/index.html',
-    // The CDN link to Tailwind CSS
     'https://cdn.tailwindcss.com',
-    // The CDN link to Firebase (only if not used via module imports)
-    // Since Firebase is imported via module, we rely on the browser's cache for those.
 ];
 
-// Install event: caches the necessary assets
+// Install: Cache core assets immediately
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Force this SW to become active immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -19,33 +18,41 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetch event: serves assets from cache first, then falls back to network
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        // No cache match, fetch from network
-        return fetch(event.request);
-      })
-  );
-});
-
-// Activate event: deletes old caches
+// Activate: Clean up old caches immediately
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Take control of the page immediately
   );
+});
+
+// Fetch: NETWORK FIRST for HTML, CACHE FIRST for everything else
+self.addEventListener('fetch', event => {
+  // If it's a navigation request (loading the page), go to network first
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // For images, scripts, CSS: Cache first, then network
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request);
+        })
+    );
+  }
 });
